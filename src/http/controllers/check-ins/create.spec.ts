@@ -2,6 +2,7 @@ import request from 'supertest'
 import { app } from '@/app'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAndAuthenticateUser } from '@/utils/test/create-and-authenticate-user'
+import { prisma } from '@/lib/prisma'
 
 describe('Create Check-in (e2e)', () => {
   beforeAll(async () => {
@@ -15,21 +16,18 @@ describe('Create Check-in (e2e)', () => {
   it('should be able to create check-in', async () => {
     const { token } = await createAndAuthenticateUser(app)
 
-    const gymResponse = await request(app.server)
-      .post('/gyms')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
+    const gym = await prisma.gym.create({
+      data: {
         title: 'JavaScript Gym',
         description: 'Some description',
         phone: '119999999',
         latitude: -28.389829,
         longitude: -53.9885747,
-      })
-
-    const { id } = gymResponse.body.gym
+      },
+    })
 
     const response = await request(app.server)
-      .post(`/gyms/${id}/check-ins`)
+      .post(`/gyms/${gym.id}/check-ins`)
       .set('Authorization', `Bearer ${token}`)
       .send({
         latitude: -28.389829,
